@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
@@ -13,6 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
   TextEditingController userInputTextEditingController = TextEditingController();
   final SpeechToText speechToTextInstance = SpeechToText();
   String recordedAudioString = "";
+  bool isLoading = false;
 
   void initializeSpeechToText() async {
     await speechToTextInstance.initialize();
@@ -32,10 +34,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void stopListeninNow() async {
+    await speechToTextInstance.stop();
+
+    setState(() {
+
+    });
+  }
+
   void onSpeechToTextResult(SpeechRecognitionResult recognitionResult) {
     recordedAudioString = recognitionResult.recognizedWords;
 
-    print("Speech Result: ${recordedAudioString}");
+    print("Speech Result: ${recordedAudioString.toString()}");
   }
 
   @override
@@ -109,9 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-
-          //image
-
         ],
       ),
       body: SingleChildScrollView(
@@ -119,13 +126,27 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
+
+              const SizedBox(height: 40,),
               //image
               Center(
                 child: InkWell(
-                  onTap: (){
-
+                  onTap: () {
+                    speechToTextInstance.isListening
+                        ? stopListeninNow()
+                        : startListeninNow();
                   },
-                  child: Image.asset(
+                  child: speechToTextInstance.isListening
+                      ? Center(child: LoadingAnimationWidget.beat(
+                        size: 300,
+                        color: speechToTextInstance.isListening
+                            ? Colors.deepPurple
+                            : isLoading
+                            ? Colors.deepPurple[400]!
+                            : Colors.deepPurple[200]!,
+                      ),
+                  ) // ai 듣는 중
+                      : Image.asset( // ai 대기 상태
                     "assets/images/assistant_icon.png",
                     height: 300,
                     width: 300,
@@ -160,6 +181,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   InkWell(
                     onTap: ()
                     {
+                      stopListeninNow();
+
                       print('send user input : ${userInputTextEditingController.text}');
                     },
                     child: AnimatedContainer(
@@ -180,7 +203,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   )
                 ],
-              )
+              ),
+
             ],
           ),
         ),

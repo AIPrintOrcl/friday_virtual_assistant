@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
         primaryColor: Colors.blue
       ),
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+      home: const HomeScreen(),
     );
   }
 }
