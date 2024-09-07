@@ -6,14 +6,20 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-class HomeScreen extends StatefulWidget {
+
+
+class HomeScreen extends StatefulWidget
+{
   const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+
+
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin
+{
   TextEditingController userInputTextEditingController = TextEditingController();
   final SpeechToText speechToTextInstance = SpeechToText();
   String recordedAudioString = "";
@@ -22,7 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String imageUrlFromOpenAI = "";
   String answerTextFromOpenAI = "";
 
-  void initializeSpeechToText() async {
+
+  void initializeSpeechToText() async
+  {
     await speechToTextInstance.initialize();
 
     setState(() {
@@ -30,7 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void startListeninNow() async {
+  void startListeningNow() async
+  {
     FocusScope.of(context).unfocus();
 
     await speechToTextInstance.listen(onResult: onSpeechToTextResult);
@@ -40,7 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void stopListeninNow() async {
+  void stopListeningNow() async
+  {
     await speechToTextInstance.stop();
 
     setState(() {
@@ -48,62 +58,104 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void onSpeechToTextResult(SpeechRecognitionResult recognitionResult) {
+  void onSpeechToTextResult(SpeechRecognitionResult recognitionResult)
+  {
     recordedAudioString = recognitionResult.recognizedWords;
 
     speechToTextInstance.isListening ? null : sendRequestToOpenAI(recordedAudioString);
 
-    print("Speech Result: ${recordedAudioString.toString()}");
+    print("Speech Result:");
+    print(recordedAudioString);
   }
 
-  // openAI 관련 함수
   Future<void> sendRequestToOpenAI(String userInput) async {
-    stopListeninNow();
+    stopListeningNow();
 
     setState(() {
       isLoading = true;
     });
 
-    //send the request to openAI using our APIService
-    await APIService().requestOpenAI(userInput, modeOpenAI, 2000).then((value) {
+    try {
+      // API 호출 전 로그 출력
+      print("OpenAI에 보낼 요청: $userInput");
+
+      // OpenAI API로 요청 보내기
+      var response = await APIService().requestOpenAI(userInput, modeOpenAI, 2000);
+
       setState(() {
         isLoading = false;
       });
 
-      if(value.statusCode == 401) {
+      if (response.statusCode == 401) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-                  "Api Key you are/were using expired or it is not working anymore.",
-                ),
-            ),
+          const SnackBar(
+            content: Text("API 키가 만료되었거나 작동하지 않습니다."),
+          ),
         );
+        return;
       }
 
-      userInputTextEditingController.clear();
+      // 응답 데이터 출력
+      print("OpenAI로부터 받은 응답: ${response.body}");
 
-      final responseAvailable = jsonDecode(value.body); // API 받은 인코딩된 응답 내용을 디코딩함.
+      // 응답을 JSON으로 변환
+      final responseAvailable = jsonDecode(response.body);
 
-      if(modeOpenAI == "chat") { // ai chat
-         answerTextFromOpenAI = utf8.decode(responseAvailable["choices"][0]["text"].toString().codeUnits);
-      } else { // ai image
-        setState(() {
-          imageUrlFromOpenAI = responseAvailable["data"][0]["url"];
-        });
+      if (responseAvailable == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("OpenAI 응답이 비어있습니다."),
+          ),
+        );
+        return;
       }
-    }).catchError((errorMessage) {
+
+      if (modeOpenAI == "chat") {
+        // ChatGPT 응답 처리
+        if (responseAvailable["choices"] != null &&
+            responseAvailable["choices"].isNotEmpty) {
+          setState(() {
+            answerTextFromOpenAI = utf8.decode(
+                responseAvailable["choices"][0]['message']['content'].toString().codeUnits);
+            print("ChatGPT 응답: $answerTextFromOpenAI");
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("OpenAI 응답에 텍스트가 없습니다."),
+            ),
+          );
+        }
+      } else {
+        // 이미지 생성 처리
+        if (responseAvailable["data"] != null &&
+            responseAvailable["data"].isNotEmpty) {
+          setState(() {
+            imageUrlFromOpenAI = responseAvailable["data"][0]["url"];
+            print("생성된 이미지 URL: $imageUrlFromOpenAI");
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("이미지 URL을 가져올 수 없습니다."),
+            ),
+          );
+        }
+      }
+    } catch (e) {
       setState(() {
         isLoading = false;
-
-        SnackBar(
-            content: Text(
-              "Error: " + errorMessage.toString(),
-            ),
-        );
       });
-    });
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("오류 발생: ${e.toString()}"),
+        ),
+      );
+    }
   }
+
+
 
   @override
   void initState() {
@@ -113,30 +165,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context)
+  {
     return Scaffold(
-      // 음성 sound
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
-        onPressed: (){
+        onPressed: ()
+        {
 
         },
         child: Padding(
           padding: const EdgeInsets.all(4.0),
           child: Image.asset(
-            "assets/images/sound.png",
+              "assets/images/sound.png"
           ),
         ),
       ),
       appBar: AppBar(
         flexibleSpace: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.purpleAccent.shade100,
-                Colors.deepPurple,
-              ]
-            )
+              gradient: LinearGradient(
+                  colors: [
+                    Colors.purpleAccent.shade100,
+                    Colors.deepPurple,
+                  ]
+              )
           ),
         ),
         title: Image.asset(
@@ -151,13 +204,16 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 4, top: 4),
             child: InkWell(
-              onTap: () {
-
+              onTap: ()
+              {
+                setState(() {
+                  modeOpenAI = "chat";
+                });
               },
-              child: const Icon(
+              child: Icon(
                 Icons.chat,
                 size: 40,
-                color: Colors.white,
+                color: modeOpenAI == "chat" ? Colors.white : Colors.grey,
               ),
             ),
           ),
@@ -166,16 +222,20 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 8, left: 4),
             child: InkWell(
-              onTap: () {
-
+              onTap: ()
+              {
+                setState(() {
+                  modeOpenAI = "image";
+                });
               },
-              child: const Icon(
+              child: Icon(
                 Icons.image,
                 size: 40,
-                color: Colors.white,
+                color: modeOpenAI == "image" ? Colors.white : Colors.grey,
               ),
             ),
           ),
+
         ],
       ),
       body: SingleChildScrollView(
@@ -185,25 +245,26 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
 
               const SizedBox(height: 40,),
+
               //image
               Center(
                 child: InkWell(
-                  onTap: () {
+                  onTap: ()
+                  {
                     speechToTextInstance.isListening
-                        ? stopListeninNow()
-                        : startListeninNow();
+                        ? stopListeningNow()
+                        : startListeningNow();
                   },
                   child: speechToTextInstance.isListening
                       ? Center(child: LoadingAnimationWidget.beat(
-                        size: 300,
-                        color: speechToTextInstance.isListening
-                            ? Colors.deepPurple
-                            : isLoading
-                            ? Colors.deepPurple[400]!
-                            : Colors.deepPurple[200]!,
-                      ),
-                  ) // ai 듣는 중
-                      : Image.asset( // ai 대기 상태
+                    size: 300,
+                    color: speechToTextInstance.isListening
+                        ? Colors.deepPurple
+                        : isLoading
+                        ? Colors.deepPurple[400]!
+                        : Colors.deepPurple[200]!,
+                  ),)
+                      : Image.asset(
                     "assets/images/assistant_icon.png",
                     height: 300,
                     width: 300,
@@ -215,40 +276,40 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 50,
               ),
 
-              //채팅 입력 및 보내기
+              //text field with a button
               Row(
                 children: [
-                  //텍스트 입력. text field
+
+                  //text field
                   Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 4.0),
-                        child: TextField(
-                          controller: userInputTextEditingController,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: "무엇을 도와드릴까요?",
-                          ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4.0),
+                      child: TextField(
+                        controller: userInputTextEditingController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: "how can i help you?",
                         ),
-                      )
+                      ),
+                    ),
                   ),
 
                   const SizedBox(width: 10,),
 
-                  // 메시지 보내기 button
+                  //button
                   InkWell(
                     onTap: ()
                     {
-                      if(userInputTextEditingController.text.isNotEmpty) {
+                      if(userInputTextEditingController.text.isNotEmpty)
+                      {
                         sendRequestToOpenAI(userInputTextEditingController.text.toString());
                       }
-
-                      print('send user input : ${userInputTextEditingController.text}');
                     },
                     child: AnimatedContainer(
                       padding: const EdgeInsets.all(15),
                       decoration: const BoxDecoration(
-                        shape: BoxShape.rectangle,
-                        color: Colors.deepPurpleAccent
+                          shape: BoxShape.rectangle,
+                          color: Colors.deepPurpleAccent
                       ),
                       duration: const Duration(
                         milliseconds: 1000,
@@ -260,7 +321,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         size: 30,
                       ),
                     ),
-                  )
+                  ),
+
                 ],
               ),
 
