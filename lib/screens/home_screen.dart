@@ -331,6 +331,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
 
+              const SizedBox(
+                height: 24,
+              ),
+
+              //display result
+              modeOpenAI == "chat"
+                  ? SelectableText(
+                    answerTextFromOpenAI,
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                  : modeOpenAI == "image" && imageUrlFromOpenAI.isNotEmpty
+                  ? Column(
+                    //image
+                  )
+                  : Container()
+
             ],
           ),
         ),
