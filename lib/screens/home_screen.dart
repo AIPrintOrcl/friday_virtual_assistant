@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:friday_virtual_assistant/api/api_service.dart';
+import 'package:image_downloader/image_downloader.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -348,6 +349,35 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   : modeOpenAI == "image" && imageUrlFromOpenAI.isNotEmpty
                   ? Column(
                     //image
+                    children: [
+                      Image.network(
+                        imageUrlFromOpenAI,
+                      ),
+                      const SizedBox(height: 14,),
+                      // 이미지 저장 버튼
+                      ElevatedButton(
+                          onPressed: () async {
+                            String? imageStatus = await ImageDownloader.downloadImage(imageUrlFromOpenAI);
+
+                            if(imageStatus != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Image downloaded Successfully.")
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                          ),
+                        child: Text(
+                          "이미지 저장",
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    ],
                   )
                   : Container()
 

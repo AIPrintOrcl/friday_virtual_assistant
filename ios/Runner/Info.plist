@@ -8,6 +8,12 @@
     <key>NSMicrophoneUsageDescription</key>
     <string>Microphone is used because you will speak to me</string>
 
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This permission is to access the user’s photo library.</string>
+
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>This permission is to get write-only access to the user’s photo library.</string>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
