@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String modeOpenAI = "chat";
   String imageUrlFromOpenAI = "";
   String answerTextFromOpenAI = "";
+  String interest_level = "";
 
 
   void initializeSpeechToText() async
@@ -117,7 +118,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           setState(() {
             answerTextFromOpenAI = utf8.decode(
                 responseAvailable["choices"][0]['message']['content'].toString().codeUnits);
+            interest_level = utf8.decode(
+                responseAvailable["choices"][0]['message']['interest_level'].toString().codeUnits);
             print("ChatGPT 응답: $answerTextFromOpenAI");
+            print("ChatGPT 관심도: $interest_level");
           });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -288,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         controller: userInputTextEditingController,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          labelText: "how can i help you?",
+                          labelText: "개구니와 이야기해 보세요.",
                         ),
                       ),
                     ),
@@ -303,6 +307,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       if(userInputTextEditingController.text.isNotEmpty)
                       {
                         sendRequestToOpenAI(userInputTextEditingController.text.toString());
+                        userInputTextEditingController.clear();
                       }
                     },
                     child: AnimatedContainer(
