@@ -39,6 +39,7 @@ dependencies:
   loading_animation_widget: ^1.2.1
   http: ^1.2.2
   image_downloader: ^0.31.0
+  text_to_speech: ^0.2.3
 
 dev_dependencies:
   flutter_test:

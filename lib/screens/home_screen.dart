@@ -6,6 +6,7 @@ import 'package:image_downloader/image_downloader.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:text_to_speech/text_to_speech.dart';
 
 
 
@@ -25,10 +26,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final SpeechToText speechToTextInstance = SpeechToText();
   String recordedAudioString = "";
   bool isLoading = false;
+  bool speakFRIDAY = true;
   String modeOpenAI = "chat";
   String imageUrlFromOpenAI = "";
   String answerTextFromOpenAI = "";
-  String interest_level = "";
+  String interest_level = ""; // 관심도
+  final TextToSpeech textToSpeechInstance = TextToSpeech();
 
 
   void initializeSpeechToText() async
@@ -123,6 +126,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 responseAvailable["choices"][0]['message']['interest_level'].toString().codeUnits);
             print("ChatGPT 응답: $answerTextFromOpenAI");
             print("ChatGPT 관심도: $interest_level");
+
+            //텍스트를 음성으로 변환
+            if(speakFRIDAY) {
+              textToSpeechInstance.speak(answerTextFromOpenAI);
+            }
           });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -173,16 +181,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context)
   {
     return Scaffold(
+      // ai 응답 음성/음소거 설정
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
         onPressed: ()
         {
+          if(!isLoading) {
+            setState(() {
+              speakFRIDAY = !speakFRIDAY;
+            });
+          }
 
+          textToSpeechInstance.stop();
         },
-        child: Padding(
+        // 음성 설정
+        child: speakFRIDAY ? Padding(
           padding: const EdgeInsets.all(4.0),
           child: Image.asset(
               "assets/images/sound.png"
+          ),
+          // 음소거 설정
+        ) : Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Image.asset(
+              "assets/images/mute.png"
           ),
         ),
       ),
@@ -380,7 +402,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ],
                   )
                   : Container()
-
             ],
           ),
         ),
