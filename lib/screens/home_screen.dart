@@ -220,13 +220,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ),
         title: Image.asset(
-          "assets/images/logo.png",
-          width: 140,
+          "assets/images/app_icon.png",
+          width: 40,
         ),
         titleSpacing: 10,
         elevation: 2,
         actions: [
-
           //chat
           Padding(
             padding: const EdgeInsets.only(right: 4, top: 4),
@@ -292,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         : Colors.deepPurple[200]!,
                   ),)
                       : Image.asset(
-                    "assets/images/assistant_icon.png",
+                    "assets/gif/egg0.gif",
                     height: 300,
                     width: 300,
                   ),
