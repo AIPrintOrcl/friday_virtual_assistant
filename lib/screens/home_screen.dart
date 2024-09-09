@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:friday_virtual_assistant/api/api_service.dart';
@@ -30,9 +32,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String modeOpenAI = "chat";
   String imageUrlFromOpenAI = "";
   String answerTextFromOpenAI = "";
-  String interest_level = ""; // 관심도
+  int interest_level = 50; // 관심도
   final TextToSpeech textToSpeechInstance = TextToSpeech();
-
 
   void initializeSpeechToText() async
   {
@@ -122,8 +123,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           setState(() {
             answerTextFromOpenAI = utf8.decode(
                 responseAvailable["choices"][0]['message']['content'].toString().codeUnits);
-            interest_level = utf8.decode(
-                responseAvailable["choices"][0]['message']['interest_level'].toString().codeUnits);
+
+            // "[관심도: +1]" 부분을 추출
+            int interestTemp = setInterestLevel(answerTextFromOpenAI);
+
+            interest_level += interestTemp;
+            interest_level = min(interest_level, 100);
+            interest_level = max(interest_level, 0);
+
+            // interest_level = utf8.decode(
+            //     responseAvailable["choices"][0].toString().codeUnits);
             print("ChatGPT 응답: $answerTextFromOpenAI");
             print("ChatGPT 관심도: $interest_level");
 
@@ -159,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       setState(() {
         isLoading = false;
       });
-
+      print(e.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("오류 발생: ${e.toString()}"),
@@ -167,8 +176,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       );
     }
   }
-
-
 
   @override
   void initState() {
@@ -302,6 +309,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 height: 50,
               ),
 
+              //관심도
+              Container(
+                child: Column(
+                  children: [
+                    Text(
+                      ('${interest_level}/100'),
+                    ),
+                    LinearProgressIndicator( /// LinearProgressIndicator : Flutter에서 진행 상황을 시각적으로 표시하기 위한 위젯
+                      minHeight: 6,
+                      backgroundColor: Colors.black26,
+                      valueColor:
+                      AlwaysStoppedAnimation<Color>(Colors.blue),
+                      value: interest_level / 100, // 현재 게이지 / max 게이지
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(
+                height: 12,
+              ),
+
               //text field with a button
               Row(
                 children: [
@@ -400,11 +429,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       )
                     ],
                   )
-                  : Container()
+                  : Container(),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+int setInterestLevel(String answerTextFromOpenAI) {
+  int reselt = 0;
+  RegExp regExp = RegExp(r'관심도:\s*([+-]\d+)');
+  var match = regExp.firstMatch(answerTextFromOpenAI);
+  if (match != null) {
+    reselt = int.parse(match.group(1) ?? "0");
+  } else {
+    reselt = 0; // 기본값 설정
+  }
+
+  return reselt;
 }
